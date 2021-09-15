@@ -42,8 +42,9 @@ def forwpropagation(w,b,x,activation=sigmoid,activations=[]):
         a_cached += [a]
     return a,z_cached,a_cached
 
-def backpropagation(w,b,z_cached,activations,error,lr=0.001):
-    m = len(error)
+def backpropagation(w,b,z_cached,activations,error,lr=0.001,m = 1):
+	#backpropagation(Weights,biases,Z's,activations on layers,error,learning rate,num of examples)
+	#return None - changing parameters
     dw = [None for _ in range(len(w))]
     db = [None for _ in range(len(b))]#suppose len(b) == len(w)
     for i in range(len(w)):
