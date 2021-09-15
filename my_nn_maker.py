@@ -1,9 +1,11 @@
 import numpy as np
 import math
 
-def net_init(layers_count,layers_shapes):#return weights and biases
+def net_init(layers_count,layers_shapes,include_bias = True):#return weights and biases
     w =  [np.random.randn(layers_shapes[i]).reshape((layers_shapes[i],1)) for i in range(layers_count)]
     b = np.zeros((layers_count,1))
+    if include_bias:
+        return w,b
     return w
 
 def sigmoid(x):
@@ -14,18 +16,24 @@ def relu(x):
 
 def linear(x): return x
 
-def derivative(f,x,dx):# return function derivative at point x
+def compute_derivative(f,x,dx=10**(-8)):# return function derivative at point x
     return (f(x+dx)-f(x-dx))/(2.*dx)
 
-def forward_prop(w,b,x,activation=sigmoid,activations=[]):
+def forwpropagation(w,b,x,activation=sigmoid,activations=[]):
     # z = w[1:].T@x[sample] + w[0]
     # y_pred = a = sigmoid(z)
     # L(a,y) = -(ylog(a)+(1-y)log(1-a))
-    if activations:
-        pass
+
     a = x
     z_cached = []
     a_cached = []
+    if activations:
+        for layer in range(len(w)):
+            z = w[layer].T@a + b[layer]
+            z_cached += [z]
+            a = activations[layer](z)
+            a_cached += [a]
+        return a,z_cached,a_cached
 
     for layer in range(len(w)):
         z = w[layer].T@a + b[layer]#w.T@x + b
@@ -34,23 +42,20 @@ def forward_prop(w,b,x,activation=sigmoid,activations=[]):
         a_cached += [a]
     return a,z_cached,a_cached
 
-def backward_prop(y_actual,y_predicted,w,b,activations,z_cached,a_cached):
-    a = y_actual
-    dz = a-y_predicted
-    m = y_actual.shape[1] #num of examples
-    dw = np.zeros(len(w))
-    db = np.zeros(b.shape)
+def backpropagation(w,b,z_cached,activations,error,lr=0.001):
+    m = len(error)
+    dw = [None for _ in range(len(w))]
+    db = [None for _ in range(len(b))]#suppose len(b) == len(w)
     for i in range(len(w)):
-        dw[-i] = 1/m*dz@a_cached[-(i+1)].T
-        db[-i] = 1/m*np.sum(dz,axis=0,keepdims=True)
-        w[-i] += dw[-i]
-        b += db
+        dw[-i] = 1/m * np.sum(error*compute_derivative(activations[-i],z_cached),axis=1)
+        db[-i] = dw[-i]
+        error = df[-i].dot(w[-i-1])
+        w[-i] = w[-i] - lr*dw[-i]
+        b[-i] = b[-i] - lr*d
 
-    return w,b
-
-#some cost functions
+#some cost functions and metrics
 def binary_crossentropy(y,actual):
-    return -1./y.shape[0] * np.sum(actual*np.log(y)+(1-actual)*np.log(1-y))
+    return -1./y.shape[1] * np.sum(actual*np.log(y)+(1-actual)*np.log(1-y))
 
 def sparse_categorical_crossentropy(y,actual):
     return -np.sum(actual*np.log(y))
@@ -63,3 +68,30 @@ def MSE(y,actual):
 
 def nMSE(n,y,actual):
     return sum((((y-actual)**2)/y.shape[0])**(1./n))
+
+def l2_regularization(w,l,m):
+    #w - weights matrix
+    #l - lambda (regularization rate)
+    #m - count of examples
+    return l/(2*m) * np.sum([x**2 for x in w])
+
+
+def acc(y_actual,y_pred):
+    TP = 0
+    FP = 0
+    FN = 0
+    TN = 0
+    for i in range(y_pred.shape[1]):
+        if y_actual[i] == 0:
+            if y_pred[i] == 0:
+                TN += 1
+            else:
+                FP +=1
+
+        else:
+            if y_pred[i] == 1:
+                TP += 1
+            else:
+                FN += 1
+    return (TP+TN)/(TP+FP+FN+TN)
+
