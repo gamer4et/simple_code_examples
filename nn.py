@@ -81,24 +81,7 @@ def backward_propagation(weights,activations,error,z_cached,lr=.0001):
 		weights[-i] -= delta*lr
 	return weights
 
-'''
 
-layers = [(weights1,activation1),...,(weights_n,activation_n)]
-weights = np.array(...)
-weight[i].shape = (layer[i].shape,layer[i-1].shape)
-weights.shape = (m,1)
-activation = func
-
-
-
-class dense_sequential:
-    def __init__(self,layers):
-        self.w = [x[0] for x in layers]
-        self.activations = [x[1] for x in layers]
-    def compile(loss=RMSE,metrics=RMSE):
-    def fit(x,y,epochs=1):
-        if not self.is_compile: raise Exception("Model is not compiled")
-'''
 
 if __name__ == "__main__":
 	layers = [(3,linear),(2,relu),(1,sigmoid)]
